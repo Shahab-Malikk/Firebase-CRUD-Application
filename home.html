@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Contact Book</title>
+  <link rel="stylesheet" href="/style.css">
+
+</head>
+
+<body>
+  <nav>
+    <h3>Contact Book</h3>
+    <button id="logOut">Logout</button>
+  </nav>
+  <main>
+    <button class="btn-primary" id="toggle-btn">Update Contact</button>
+    <form id="contact-form" class="contact-form">
+
+      <input type="text" id="key" name="key" placeholder="Enter Unique Key" class="animate__animated animate__fadeIn">
+
+      <input type="text" id="name" name="name" class="animate__animated animate__fadeIn">
+
+      <input type="email" id="email" name="email" class="animate__animated animate__fadeIn">
+
+      <input type="tel" id="phone" name="phone" class="animate__animated animate__fadeIn">
+
+      <button id="save-btn" class="btn-primary form-btn">Save Contact</button>
+      <div class="btn-group">
+        <button id="update-btn" class="btn-primary form-btn animate__animated animate__fadeIn">Update Contact</button>
+        <button id="delete-btn" class="btn-primary form-btn animate__animated animate__fadeIn">Delete Contact</button>
+      </div>
+
+    </form>
+    <ul id="contacts-list" class="contacts-list"></ul>
+  </main>
+
+
+
+
+</body>
+<script type="module">
+  import { database } from './index.js'
+  import { get, ref, set, push, child, update, remove } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
+  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
+  const auth = getAuth();
+
+  // Get references to HTML elements
+  var form = document.getElementById('contact-form');
+  var keyInput = document.getElementById('key')
+  var nameInput = document.getElementById('name');
+  var emailInput = document.getElementById('email');
+  var phoneInput = document.getElementById('phone');
+  var contactsList = document.getElementById('contacts-list');
+  const saveBtn = document.getElementById('save-btn');
+  const toggleBtn = document.getElementById('toggle-btn')
+  const updateBtn = document.getElementById('update-btn')
+  const deleteBtn = document.getElementById('delete-btn')
+  const logOutBtn = document.getElementById('logOut')
+  let isSaving = true;
+
+  updateBtn.style.display = 'none'
+  deleteBtn.style.display = 'none'
+  keyInput.style.display = 'none'
+
+
+
+  toggleBtn.addEventListener('click', () => {
+    isSaving = !isSaving
+    if (isSaving) {
+      toggleBtn.textContent = 'Update Contact',
+        updateBtn.style.display = 'none'
+      deleteBtn.style.display = 'none'
+      keyInput.style.display = 'none'
+      saveBtn.stye.display = 'block'
+    } else {
+      toggleBtn.textContent = 'Save Contact',
+        updateBtn.style.display = 'block'
+      deleteBtn.style.display = 'block'
+      keyInput.style.display = 'block'
+      saveBtn.style.display = 'none'
+
+    }
+  })
+
+  saveBtn.addEventListener('click', (e) => {
+    e.preventDefault()
+    const name = nameInput.value
+    const email = emailInput.value
+    const phone = phoneInput.value
+
+    const key = push(child(ref(database), 'contacts')).key
+
+    set(ref(database, 'contacts/' + key), {
+      name,
+      email,
+      phone
+    }).then(() => {
+      alert('Contact Saved')
+    }).catch((err) => {
+      alert(err.message)
+    })
+
+    displayContacts()
+
+  })
+
+
+  function displayContacts() {
+    contactsList.innerHTML = ''
+    const dbRef = ref(database);
+
+    get(child(dbRef, `contacts/`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        snapshot.forEach((chilSnapShot) => {
+          const data = chilSnapShot.val()
+          const name = data.name
+          const email = data.email
+          const phone = data.phone
+
+          const li = document.createElement('li')
+          li.innerHTML = `<span>${name}</span> <br><span>${email}</span><br><span>${phone}</span>`
+          contactsList.appendChild(li)
+
+        })
+        console.log(snapshot.val());
+      } else {
+        console.log("No data available");
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
+
+  }
+
+  displayContacts()
+
+  keyInput.addEventListener('keypress', (e) => {
+
+    if (e.keyCode === 13) {
+      e.preventDefault()
+      const userId = keyInput.value
+
+      const dbRef = ref(database);
+      get(child(dbRef, `contacts/${userId}`)).then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val()
+          nameInput.value = data.name
+          emailInput.value = data.email
+          phoneInput.value = data.phone
+          console.log(snapshot.val());
+        } else {
+          console.log("No data available");
+        }
+      }).catch((error) => {
+        console.error(error);
+      });
+    }
+
+  })
+
+
+  updateBtn.addEventListener('click', (e) => {
+    e.preventDefault()
+    const name = nameInput.value
+    const email = emailInput.value
+    const phone = phoneInput.value
+    const key = keyInput.value
+
+    update(ref(database, 'contacts/' + key), {
+      name,
+      email,
+      phone
+    }).then(() => {
+      alert('Contact Updated')
+    }).catch((err) => {
+      alert(err.message)
+    })
+    displayContacts()
+  })
+
+
+  deleteBtn.addEventListener('click', (e) => {
+    e.preventDefault()
+    const key = keyInput.value
+    remove(ref(database, 'contacts/' + key)).then(() => {
+      alert('Contact Deleted')
+      displayContacts()
+    }).catch((err) => {
+      alert(err.message)
+    })
+  })
+
+
+
+
+  logOutBtn.addEventListener('click', () => {
+    const auth = getAuth();
+    signOut(auth).then(() => {
+      alert('Signed Out')
+      window.location.href = 'login.html'
+    }).catch((error) => {
+      // An error happened.
+    });
+
+
+  })
+
+
+
+
+
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User is signed in, see docs for a list of available properties
+      // https://firebase.google.com/docs/reference/js/firebase.User
+      const uid = user.uid;
+      // ...
+    } else {
+      // User is signed out
+       window.location.href = 'login.html'
+      // ...
+    }
+  });
+
+
+
+
+
+
+</script>
+
+</html>
