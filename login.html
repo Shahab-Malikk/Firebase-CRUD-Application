@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogIn</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+  <div class="card-container">
+    <div class="box">
+      <h1 class="form-heading">Login</h1>
+      <form action="" class="form">
+        <input type="email" name="email" placeholder="Enter your Email" id="email">
+        <input type="password" name="password" placeholder="Enter your Password" id="password">
+        <button type="submit" id="logInbutton">Log In</button>
+        <p>Create New Account <a href="index.html" class="link">Signup</a></p>
+      </form>
+
+    </div>
+  </div>
+
+</body>
+
+
+<script type="module">
+  import { database } from './index.js'
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
+  import { ref, update } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
+  const auth = getAuth()
+
+  const logInBtn = document.getElementById('logInbutton')
+  logInBtn.addEventListener('click', (e) => {
+    e.preventDefault()
+    const email = document.getElementById('email').value
+    const password = document.getElementById('password').value
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // Signed in 
+        const user = userCredential.user;
+        const uid = user.uid
+        update(ref(database, 'loggedUser/' + uid), {
+          email,
+          password,
+          lastLoggedIn: new Date().toLocaleString()
+
+        }).then(() => {
+          alert('user logged in')
+          window.location.href = 'home.html'
+
+        }).catch((error) => {
+          console.log(error)
+        })
+
+        // ...
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+      });
+
+  })
+
+
+
+</script>
+
+</html>

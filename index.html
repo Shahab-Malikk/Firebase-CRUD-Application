@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogIn</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+  <div class="card-container">
+    <div class="box">
+      <h1 class="form-heading">Signup</h1>
+      <form action="" class="form" method="post">
+        <div class="input-cotainer">
+          <input type="text" name="fname" placeholder="Enter First Name" id="fname">
+          <input type="text" name="lname" placeholder="Enter Last Name" id="lname">
+
+        </div>
+        <input type="email" name="email" placeholder="Enter your Email" id="email">
+        <input type="password" name="password" placeholder="Enter your Password" id="password">
+        <button type="submit" id="signUpbutton">Signup</button>
+        <p>Already Have Account <a href="login.html" class="link">Login</a></p>
+      </form>
+
+    </div>
+  </div>
+</body>
+
+<script type="module">
+  import { app, database } from './index.js'
+  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-auth.js";
+  import { ref, set } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-database.js";
+  const signUpBtn = document.getElementById('signUpbutton')
+  const auth=getAuth()
+
+  signUpBtn.addEventListener('click', (e) => {
+
+    e.preventDefault()
+    const email = document.getElementById('email').value
+    const password = document.getElementById('password').value
+    const fname = document.getElementById('fname').value
+    const lname = document.getElementById('lname').value
+    const auth = getAuth();
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // Signed in 
+        const user = userCredential.user;
+        const uid = user.uid
+        alert('user created')
+        console.log(user)
+        set(ref(database, 'users/' + user.uid), {
+          fname,
+          lname,
+          email,
+          password,
+
+        }).then(() => {
+          window.location.href = 'login.html'
+
+        }).catch((error) => {
+          console.error(error);
+        });
+
+        // ...
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // ..
+      });
+
+  })
+
+</script>
+
+</html>
